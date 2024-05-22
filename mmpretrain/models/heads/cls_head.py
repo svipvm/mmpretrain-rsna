@@ -139,18 +139,32 @@ class ClsHead(BaseModule):
 
         Including softmax and set ``pred_label`` of data samples.
         """
-        pred_scores = F.softmax(cls_score, dim=1)
-        pred_labels = pred_scores.argmax(dim=1, keepdim=True).detach()
+        if self.num_classes == 1:
+            pred_scores = F.sigmoid(cls_score)
 
-        out_data_samples = []
-        if data_samples is None:
-            data_samples = [None for _ in range(pred_scores.size(0))]
+            out_data_samples = []
+            if data_samples is None:
+                data_samples = [None for _ in range(pred_scores.size(0))]
 
-        for data_sample, score, label in zip(data_samples, pred_scores,
-                                             pred_labels):
-            if data_sample is None:
-                data_sample = DataSample()
+            for data_sample, score in zip(data_samples, pred_scores):
+                if data_sample is None:
+                    data_sample = DataSample()
 
-            data_sample.set_pred_score(score).set_pred_label(label)
-            out_data_samples.append(data_sample)
+                data_sample.set_pred_score(score)
+                out_data_samples.append(data_sample)
+        else:
+            pred_scores = F.softmax(cls_score, dim=1)
+            pred_labels = pred_scores.argmax(dim=1, keepdim=True).detach()
+
+            out_data_samples = []
+            if data_samples is None:
+                data_samples = [None for _ in range(pred_scores.size(0))]
+
+            for data_sample, score, label in zip(data_samples, pred_scores,
+                                                pred_labels):
+                if data_sample is None:
+                    data_sample = DataSample()
+
+                data_sample.set_pred_score(score).set_pred_label(label)
+                out_data_samples.append(data_sample)
         return out_data_samples
